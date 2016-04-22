@@ -499,6 +499,7 @@ var Wrap = createClass({
 	},
 	closeDialog: function() {
 		this.setState({modal: undefined});
+		//TODO: set focus back to the editor
 	},
 	render: function() {
 		var p = this.props;

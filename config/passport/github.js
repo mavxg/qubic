@@ -1,5 +1,5 @@
 var GithubStrategy = require('passport-github').Strategy;
-var User           = require('../models/user');
+var User           = require('../../models/user');
 
 module.exports = new GithubStrategy({
     clientID     : process.env.GITHUB_ID,

@@ -1,5 +1,5 @@
 var TwitterStrategy = require('passport-twitter').Strategy;
-var User            = require('../models/user');
+var User            = require('../../models/user');
 
 module.exports = new TwitterStrategy({
     consumerKey     : process.env.TWITTER_KEY,
