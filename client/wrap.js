@@ -377,7 +377,7 @@ var Wrap = createClass({
 			doc: this.props.store.document(),
 			paused: this.props.sharedoc.paused,
 			catalog: this.props.catalog,
-			sidebar: 'summary',
+			sidebar: 'none',
 			search: false,
 			editable: (docMode === 'edit'),
 			filter: '',
