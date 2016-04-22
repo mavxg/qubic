@@ -38,6 +38,8 @@ router.post('/new', function(req, res) {
 function isOwner(req, res, next) {
 	if (req.collection.owners.indexOf(req.user.name) === -1)
 		next('You do not have permission to edit this collection');
+
+	res.locals.newCatalog = req.collection.name;
 	next();
 }
 

@@ -93,6 +93,9 @@ if (AD_CONTROLLER) {
 app.use(function(req,res,next){
     res.locals.req = req;
     res.locals.user = req.user;
+    res.locals.canLogout = !AD_CONTROLLER;
+    if (req.user)
+      res.locals.newCatalog = req.user.catalog;
     req.drafts = drafts; //livedb collection
     next();
 });
