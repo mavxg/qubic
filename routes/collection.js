@@ -30,7 +30,7 @@ router.post('/new', function(req, res) {
 				collection:col
 			});
 		}
-		res.redirect('../'+ col.name);
+		res.redirect('/'+ col.name);
 	});
 });
 
@@ -69,7 +69,7 @@ router.post('/settings/:collection', isOwner, function(req, res, next) {
   				collection:col
   			});
 		}
-		res.redirect('../'+col.name);
+		res.redirect('/'+col.name);
 	})
 });
 
