@@ -107,7 +107,7 @@ var Delete = createClass({
 				DOM.span({className:"fa fa-trash-o modal-icon"},""),
 				DOM.h3({},"Delete Model"),
 				DOM.hr({}),
-				DOM.p({},[DOM.span({},"Are you sure you want to delete "),DOM.strong({},p.title),DOM.span({},"?")]),
+				DOM.p({},[DOM.span({},"Are you sure you want to delete "),DOM.strong({},p.title || "Untitled"),DOM.span({},"?")]),
 				DOM.form({className:'',action:p.url,method:'post'},[
 					DOM.input({type:'hidden', name:'del', value:'true'}),
 					DOM.a({className:"pure-button pure-u-1-5", onClick: p.closeDialog},"Cancel"),
