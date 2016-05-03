@@ -26,8 +26,8 @@ var documentSchema = mongoose.Schema({
 });
 
 documentSchema.index({
-	title: 'text', 
-	text: 'text', 
+	title: 'text',
+	text: 'text',
 	slug: 'text',
 	status: 1,
 	catalog: 1
