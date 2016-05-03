@@ -29,24 +29,41 @@ function collections(str, limit) {
   ).exec();
 }
 
-function documents(str, limit) {
-  return Document.find(
-    { $text: { $search: str }, status:'public' },
-    { score: { $meta: "textScore" } }
-  ).sort(
-    { score: { $meta: "textScore" } }
-  ).limit(limit || 20
-  ).select('catalog title slug created updated'
-  ).lean(
-  ).exec();
+function documents(user, str, limit) {
+  return Collection.find({ $or: [
+      {'owners':user.name},
+      {'writers':user.name},
+      {'readers':user.name}
+      ]},'name')  
+  .exec().then(function(colls){
+    var collections = colls.map(function(coll) {
+      return coll.name;
+    });
+    return Document.find(
+      {$and:
+        [{$or: [{'catalog':{$in:collections}},
+                {'catalog':'@'+user.name},
+                {'status':{$in:['full','public']}}
+               ]},
+        {$text:{$search:str}}
+        ]
+      },
+      { score: { $meta: "textScore" } }
+    ).sort({ score: { $meta: "textScore" } }
+    ).limit(limit || 20
+    ).select('catalog title slug created updated archived'
+    ).lean(
+    ).exec();
+  });
 }
 
 router.get('/', function(req, res, next) {
   if (!req.query.q)
   	return res.render('search', { q:''});
   var q = req.query.q || '';
+  var user = req.user || '';
   Promise.all([
-  	documents(q),
+  	documents(user,q),
   	people(q),
   	collections(q)
   ]).then(function(values) {
