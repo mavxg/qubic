@@ -273,28 +273,31 @@ var Collections = createClass({
 var Workspace = createClass({
 	render: function() {
 		var env = this.props.environment || {};
-		var wks = [];
+		var wks = {};
 		for (var k in env) {
 			if (env.hasOwnProperty(k) && env[k].func)
-				wks.push({name: k, func: env[k].func});
+				wks[k] = env[k].func;
 		}
+		var keys = Object.keys(wks);
+		keys.sort();
 		return DOM.div({className:'workspace'},[
 			DOM.h3({key:'workspace'},"Workspace"),
-			DOM.div({},wks.map(function(w) {
+			DOM.div({},keys.map(function(k) {
+				var w = wks[k];
 				var className = "fa fa-table";
-				switch (w.func.type) {
+				switch (w.type) {
 					case 'KeyDefs' :
 					case 'Category':
 						return DOM.div({},[
 							DOM.p({},[
 							DOM.em({className:'fa fa-list'}," "),
-							DOM.text(" " + w.name),
+							DOM.text(" " + k),
 						])]);
 					default:
 						return DOM.div({},[
 							DOM.p({},[
 							DOM.em({className:'fa fa-table'}," "),
-							DOM.text(" " + w.name + " :: " + w.func.dimensions.join(' x ')),
+							DOM.text(" " + k + " :: " + w.dimensions.join(' x ')),
 						])]);
 				}
 
