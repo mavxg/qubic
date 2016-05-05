@@ -304,7 +304,7 @@ var Sidebar = createClass({
 					value: p.filter,
 					}),
 				]),
-			Show({filter:p.filter, doc:doc, store:p.store}),
+			Show({filter:p.filter, doc:doc}),
 			]);
 	},
 });

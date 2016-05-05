@@ -1,35 +1,31 @@
-var Slate = require('slatejs');
+var slatejs = require('slatejs');
+var share = require('share/lib/client');
 var Wrap = require('./wrap');
-window.Wrap = Wrap;
-window.Slate = Slate;
+var friar = require('friar');
+var Dummy = require('dummy-sharejs-connection');
+var UndoManager = require('undomanager');
+window.Slate = slatejs;
+
+share.registerType(slatejs.type);
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    var wrapElm = document.getElementById('wrap');
-    var plugins = Slate.plugins;
-    var Selection = Slate.Selection;
-	var Region = Slate.Region;
-	var e = Slate.editor;
-
+	//TODO: remove dummy dependency and make a
+	// true readonly store to pass to Wrap
 	if(docMode=='edit'){
 		var dummy = new BCSocket(null, {reconnect: true});
 		dummy.canSendJSON = false; //need this because goog.json.serialize doesn't call toJSON	
 	} else {
-		var dummy = new Slate.Dummy(Slate.ottypes);
+		var dummy = new Dummy(slatejs.ottypes);
 	}
 
-	var sjs = new Slate.sharejs.Connection(dummy);
-	window.share_connection = sjs;
-	sjs.debug = true;
-	var sharedoc = sjs.get(docCollection, docId); //docCollection and docId set in the view
+	var share_connection = new share.Connection(dummy);
+	window.share_connection = share_connection;
+	share_connection.debug = true;
+	var sharedoc = share_connection.get(docCollection, docId); //docCollection and docId set in the view
 	sharedoc.subscribe();
 
-	var editor;
-	var store;
-
 	var doc = window.docSexpr || '(doc (section (h1 "") (p "")))';
-
-	var sel = new Selection([new Region(7,7)]);	
 
 	var catalog = window.catalog || 'unknown';
 
@@ -38,12 +34,17 @@ document.addEventListener('DOMContentLoaded', function () {
 			sharedoc.create('sexpr', doc);
 		}
 		else {
-			sharedoc.snapshot = Slate.type.deserialize(sharedoc.snapshot);
+			sharedoc.snapshot = slatejs.type.deserialize(sharedoc.snapshot);
 		}
-		store = new Slate.Store(sharedoc.createContext(), Slate.type);
-		store.select(sel);
-		window.wrap = Wrap({store: store,
+
+		var context = sharedoc.createContext();
+		//TODO: wrap with encryption
+		var undoManager = new UndoManager(slatejs.type, 400);
+
+		window.wrap = Wrap({
 			sharedoc: sharedoc,
+			context: context,
+			undoManager: undoManager,
 			catalog: catalog,
 			defaultCatalog: window.defaultCatalog,
 			docId: window.docId,
@@ -55,10 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 
 		try {
-			e.friar.renderComponent(wrap, wrapElm);
+			friar.renderComponent(wrap, document.getElementById('wrap'));
 		} catch (e) {
-			console.log('Failed at render')
+			console.log('Failed at render');
 			console.log(e);
 		}
-	});	
+	});
 });

@@ -5,8 +5,15 @@ var createClass = friar.createClass;
 var Toolbars = require('./toolbar');
 var Sidebar = require('./sidebar');
 var Slate = require('slatejs');
+var ot = Slate.type;
 var plugins = Slate.plugins;
-var Editor = Slate.editor.Editor;
+var Editor = Slate.Editor;
+
+var Selection = ot.Selection;
+var Region    = ot.Region;
+
+//var slatejs_qube = require('slatejs-qube');
+//var slatejs_encryption = require('slatejs-encryption');
 
 function findTitle(list) {
 	if (!(typeof list === 'object' && list.type === 'list')) return;
@@ -373,12 +380,45 @@ var MoveModal = createClass({
 	}
 });
 
+//Example of how to make a document undo manager plugin
+var undoer = function(app) {
+	function undo() {
+		app.undo();
+	}
+	undo.description = function() { return "Undo previous action."; };
+
+	function redo() {
+		app.redo();
+	}
+	redo.description = function() { return "Redo previous action."; };
+
+	return function(editor) {
+		return {
+			commands: {
+				undo,
+				redo,
+			},
+			keymap: [
+				{keys:["ctrl+z"], command:"undo"},
+				{keys:["cmd+z"], command:"undo"},
+				{keys:["ctrl+shift+z"], command:"redo"},
+				{keys:["cmd+y"], command:"redo"},
+			]
+		}
+	}
+}
+
+//undo manager needs to live in here.
 var Wrap = createClass({
 	getInitialState: function() {
+		var p = this.props;
+		p.context._onOp = this.serverApply.bind(this);
+		this.undoer = undoer(this);
 		return {
-			doc: this.props.store.document(),
-			paused: this.props.sharedoc.paused,
-			catalog: this.props.catalog,
+			doc: p.context.getSnapshot(),
+			selection: new Selection([new Region(7,7)]),
+			paused: p.sharedoc.paused,
+			catalog: p.catalog,
 			sidebar: 'summary',
 			search: false,
 			editable: (docMode === 'edit'),
@@ -386,18 +426,62 @@ var Wrap = createClass({
 		};
 	},
 	didMount: function() {
-		this.props.store.on('change', this.onChange);
-		this.onChange();
+		var sharedoc = this.props.sharedoc;
+		sharedoc.on('after op', this.afterOp);
+	},
+	undo: function() {
+		var self = this;
+		if (!this.canUndo()) return;
+		this.props.undoManager.performUndo(function(err, op) {
+			if (err) {
+				console.log(err);
+				return;
+			}
+			self.props.undoManager.add(op);
+			self._apply(op);
+		});
+	},
+	redo: function() {
+		var self = this;
+		if (!this.canRedo()) return;
+		this.props.undoManager.performRedo(function(err, op) {
+			if (err) {
+				console.log(err);
+				return;
+			}
+			self.props.undoManager.add(op);
+			self._apply(op);
+		});
+	},
+	canUndo: function() {
+		return this.props.undoManager.canUndo();
+	},
+	canRedo: function() {
+		return this.props.undoManager.canRedo();
+	},
+	serverApply: function(op) {
+		//serverApply must not throw or ops get duplicated
+		try {
+			var selection = ot.transformCursor(this.state.selection, op, false);
+			this.setState({doc: this.props.context.getSnapshot(), selection: selection});
+			this.props.undoManager.transform(op);
+		} catch (e) {
+			console.log(e);
+		}
+	},
+	afterOp: function(op, localcontext) {
+		if (!localcontext) this.onChange();
 	},
 	willUnmount: function() {
-		this.props.store.removeListener('change', this.onChange);
+		this.props.sharedoc.removeListener('after op', this.afterOp);
 	},
 	updateSlug: function() {
 		if (window.readonly) return;
 		console.log('updateSlug');
 		var p = this.props;
 		var s = this.state;
-		var doc = p.store.document()
+		var doc = s.doc;
+		if (doc === undefined || doc === null) return;
 		var req = new XMLHttpRequest();
 		//return false;
 		req.onreadystatechange = function (data) {
@@ -422,11 +506,11 @@ var Wrap = createClass({
 		return false;
 	},
 	onChange: function() {
-		var p = this.props;
-		var s = this.state;
-		this.setState({
-			doc: p.store.document()
-		});
+		var doc = this.props.context.getSnapshot();
+		if (doc === undefined) return;
+
+		if (doc !== this.state.doc)
+			this.setState({doc: doc});
 		//Update the document (TODO: don't do this if paused)
 		if (this.timeout) //unless we have more than a minutes changes to save
 			clearTimeout(this.timeout);
@@ -502,18 +586,44 @@ var Wrap = createClass({
 	closeDialog: function() {
 		this.setState({modal: undefined});
 	},
+	select: function(selection) {
+		if (this.state.selection !== selection)
+			this.setState({selection: selection});
+	},
+	_apply: function(op, selection) {
+		var context = this.props.context;
+		context.submitOp(op);
+		var sel = selection ? selection :
+			ot.transformCursor(this.state.selection, op, true);
+		this.setState({doc: context.getSnapshot(), selection: sel});
+		this.onChange();
+	},
+	apply: function(op, selection, compose) {
+		this._apply(op, selection);
+		this.props.undoManager.add(op, compose);
+		console.log('apply(ed)');
+	},
 	render: function() {
 		var p = this.props;
 		var s = this.state;
+		//Document not available yet
+		if (s.doc === undefined)
+			return DOM.h1({},"Document Loading...");
+
 		var cname = 'book ' + s.sidebar;
 		this.editor = Editor({
 			id: "preview",
-			store: p.store,
+			document: s.doc,
+			apply: this.apply,
+			select: this.select,
+			selection: s.selection,
+			//plugins:[undoer, base, table]
 			plugins: [
 				plugins.base,
 				plugins.table,
-				plugins.qube,
-				plugins.encryption,
+				this.undoer,
+				//slatejs_qube,
+				//slatejs_encryption,
 			],
 		});
 		var title = findTitle(s.doc);		
@@ -564,7 +674,6 @@ var Wrap = createClass({
 				show:s.sidebar,
 				search:s.search,
 				doc:s.doc,
-				store:p.store,
 				onSearchChange:this.onSearchChange,
 				filter:s.filter,
 			}),
@@ -590,7 +699,6 @@ var Wrap = createClass({
 					url: p.url,
 					defaultCatalog: p.defaultCatalog,
 					catalog: s.catalog,
-					store: p.store,
 					doc: s.doc,
 					sharedoc: p.sharedoc,
 					pause: this.pause,
