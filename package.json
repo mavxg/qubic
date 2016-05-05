@@ -33,6 +33,7 @@
     "cookie-parser": "~1.3.4",
     "cookie-session": "^1.1.0",
     "dummy-sharejs-connection": "git://github.com/mavxg/dummy-sharejs-connection",
+    "encrypted-context": "github:mavxg/encrypted-context",
     "express": "~4.12.2",
     "express-ntlm": "^2.1.4",
     "express-session": "^1.11.1",

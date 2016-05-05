@@ -270,10 +270,35 @@ var Collections = createClass({
 });
 
 //list of notebooks in the current collection
-var Notebooks = createClass({
+var Workspace = createClass({
 	render: function() {
-		return DOM.div({className:'notebooks'},[
-			DOM.h3({key:'notebooks'},"Notebooks"),
+		var env = this.props.environment || {};
+		var wks = [];
+		for (var k in env) {
+			if (env.hasOwnProperty(k) && env[k].func)
+				wks.push({name: k, func: env[k].func});
+		}
+		return DOM.div({className:'workspace'},[
+			DOM.h3({key:'workspace'},"Workspace"),
+			DOM.div({},wks.map(function(w) {
+				var className = "fa fa-table";
+				switch (w.func.type) {
+					case 'KeyDefs' :
+					case 'Category':
+						return DOM.div({},[
+							DOM.p({},[
+							DOM.em({className:'fa fa-list'}," "),
+							DOM.text(" " + w.name),
+						])]);
+					default:
+						return DOM.div({},[
+							DOM.p({},[
+							DOM.em({className:'fa fa-table'}," "),
+							DOM.text(" " + w.name + " :: " + w.func.dimensions.join(' x ')),
+						])]);
+				}
+
+			}))
 		]);
 	},
 });
@@ -305,8 +330,8 @@ var Sidebar = createClass({
 			case 'collections':
 				Show = Collections;
 				break;
-			case 'notebooks':
-				Show = Notebooks;
+			case 'workspace':
+				Show = Workspace;
 				break;
 			default:
 				Show = Summary;
@@ -324,7 +349,12 @@ var Sidebar = createClass({
 					value: p.filter,
 					}),
 				]),
-			Show({filter:p.filter, doc:doc, cells:p.cells, ast: p.ast}),
+			Show({filter:p.filter,
+				doc:doc,
+				cells:p.cells,
+				ast: p.ast,
+				environment: p.environment,
+			}),
 			]);
 	},
 });

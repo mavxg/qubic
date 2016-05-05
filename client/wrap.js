@@ -416,6 +416,7 @@ var Wrap = createClass({
 			paused: p.sharedoc.paused,
 			cells: p.qube._cells,
 			ast: p.qube.ast,
+			environment: p.qube.environment,
 			catalog: p.catalog,
 			sidebar: 'none',
 			search: false,
@@ -475,8 +476,14 @@ var Wrap = createClass({
 	qubeChange: function() {
 		var s = this.state;
 		var q = this.props.qube;
-		if (s.cells !== q._cells || s.ast !== q.ast)
-			this.setState({cells: q._cells, ast: q.ast});
+		if (s.cells !== q._cells ||
+		    s.ast !== q.ast ||
+		    s.environment !== q.environment)
+			this.setState({
+				cells: q._cells,
+				ast: q.ast,
+				environment: q.environment
+			});
 	},
 	willUnmount: function() {
 		this.props.qube.removeListener('change', this.qubeChange)
@@ -542,8 +549,8 @@ var Wrap = createClass({
 	onErrors: function() {
 		this.toggleSidebar('errors');
 	},
-	onNotebooks: function() {
-		this.toggleSidebar('notebooks');
+	onWorkspace: function() {
+		this.toggleSidebar('workspace');
 	},
 	onStarred: function() {
 		this.toggleSidebar('starred');
@@ -682,6 +689,7 @@ var Wrap = createClass({
 				show:s.sidebar,
 				search:s.search,
 				ast: s.ast,
+				environment: s.environment,
 				cells: s.cells,
 				doc:s.doc,
 				onSearchChange:this.onSearchChange,
@@ -698,7 +706,7 @@ var Wrap = createClass({
 					toggleSearch: this.onSearch,
 					toggleSettings: this.onSettings,
 					toggleErrors: this.onErrors,
-					toggleNotebooks: this.onNotebooks,
+					toggleWorkspace: this.onWorkspace,
 					toggleCollections: this.onCollections,
 					toggleStarred: this.onStarred,
 					showDelete: this.showDelete,
