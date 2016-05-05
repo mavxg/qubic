@@ -1,4 +1,6 @@
 var slatejs = require('slatejs');
+var ql      = require('qube');
+var slatejs_qube = require('slatejs-qube');
 var share = require('share/lib/client');
 var Wrap = require('./wrap');
 var friar = require('friar');
@@ -25,6 +27,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	var sharedoc = share_connection.get(docCollection, docId); //docCollection and docId set in the view
 	sharedoc.subscribe();
 
+	var qube = new ql.Qube(ql.prelude);
+	//qube.extend(xl);
+	window.qube = qube;
+	//qube plugin will monkey patch the type
+	var qubePlugin = slatejs_qube(qube, slatejs);
+
 	var doc = window.docSexpr || '(doc (section (h1 "") (p "")))';
 
 	var catalog = window.catalog || 'unknown';
@@ -42,6 +50,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		var undoManager = new UndoManager(slatejs.type, 400);
 
 		window.wrap = Wrap({
+			qube: qube,
+			qubePlugin: qubePlugin,
 			sharedoc: sharedoc,
 			context: context,
 			undoManager: undoManager,

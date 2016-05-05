@@ -12,7 +12,6 @@ var Editor = Slate.Editor;
 var Selection = ot.Selection;
 var Region    = ot.Region;
 
-//var slatejs_qube = require('slatejs-qube');
 //var slatejs_encryption = require('slatejs-encryption');
 
 function findTitle(list) {
@@ -622,6 +621,7 @@ var Wrap = createClass({
 				plugins.base,
 				plugins.table,
 				this.undoer,
+				p.qubePlugin,
 				//slatejs_qube,
 				//slatejs_encryption,
 			],
