@@ -297,7 +297,7 @@ var Workspace = createClass({
 						return DOM.div({},[
 							DOM.p({},[
 							DOM.em({className:'fa fa-table'}," "),
-							DOM.text(" " + k + " :: " + w.dimensions.join(' x ')),
+							DOM.text(" " + k + (w.dimensions.length > 0 ? " :: " + w.dimensions.join(' x ') : "")),
 						])]);
 				}
 
