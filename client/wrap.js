@@ -6,7 +6,6 @@ var Toolbars = require('./toolbar');
 var Sidebar = require('./sidebar');
 var Slate = require('slatejs');
 var ot = Slate.type;
-var plugins = Slate.plugins;
 var Editor = Slate.Editor;
 
 var Selection = ot.Selection;
@@ -616,15 +615,7 @@ var Wrap = createClass({
 			apply: this.apply,
 			select: this.select,
 			selection: s.selection,
-			//plugins:[undoer, base, table]
-			plugins: [
-				plugins.base,
-				plugins.table,
-				this.undoer,
-				p.qubePlugin,
-				//slatejs_qube,
-				//slatejs_encryption,
-			],
+			plugins: p.plugins.concat([this.undoer]),
 		});
 		var title = findTitle(s.doc);		
 		var subtitle = findSubtitle(s.doc);
