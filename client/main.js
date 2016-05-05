@@ -1,5 +1,6 @@
 var slatejs = require('slatejs');
 var ql      = require('qube');
+var xl      = require('qube-excel');
 var slatejs_qube = require('slatejs-qube');
 var slatejs_encryption = require('slatejs-encryption');
 var share = require('share/lib/client');
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	sharedoc.subscribe();
 
 	var qube = new ql.Qube(ql.prelude);
-	//qube.extend(xl);
+	qube.extend(xl);
 	window.qube = qube;
 	//qube plugin will monkey patch the type
 	var qubePlugin = slatejs_qube(qube, slatejs);
@@ -46,6 +47,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		else {
 			sharedoc.snapshot = slatejs.type.deserialize(sharedoc.snapshot);
 		}
+
+		qube.clear();
+		qube.exprs(sharedoc.snapshot.qube_expressions());
+		qube.build();
 
 		var baseContext = sharedoc.createContext();
 		var context = new ec.EncryptedContext(baseContext);

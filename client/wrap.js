@@ -416,6 +416,8 @@ var Wrap = createClass({
 			doc: p.context.getSnapshot(),
 			selection: new Selection([new Region(7,7)]),
 			paused: p.sharedoc.paused,
+			cells: p.qube._cells,
+			ast: p.qube.ast,
 			catalog: p.catalog,
 			sidebar: 'summary',
 			search: false,
@@ -426,6 +428,8 @@ var Wrap = createClass({
 	didMount: function() {
 		var sharedoc = this.props.sharedoc;
 		sharedoc.on('after op', this.afterOp);
+		this.props.qube.on('change', this.qubeChange)
+		
 	},
 	undo: function() {
 		var self = this;
@@ -470,8 +474,22 @@ var Wrap = createClass({
 	afterOp: function(op, localcontext) {
 		if (!localcontext) this.onChange();
 	},
+	qubeChange: function() {
+		var s = this.state;
+		var q = this.props.qube;
+		if (s.cells !== q._cells || s.ast !== q.ast)
+			this.setState({cells: q._cells, ast: q.ast});
+	},
 	willUnmount: function() {
+		this.props.qube.removeListener('change', this.qubeChange)
 		this.props.sharedoc.removeListener('after op', this.afterOp);
+	},
+	hasErrors: function() {
+		var cells  = this.props.qube._cells
+		if (!cells) return false;
+		return cells.some(function(cell) {
+			return cell.errors && cell.errors.length > 0;
+		});
 	},
 	updateSlug: function() {
 		if (window.readonly) return;
@@ -664,6 +682,8 @@ var Wrap = createClass({
 				id:"sidebar",
 				show:s.sidebar,
 				search:s.search,
+				ast: s.ast,
+				cells: s.cells,
 				doc:s.doc,
 				onSearchChange:this.onSearchChange,
 				filter:s.filter,
@@ -686,6 +706,7 @@ var Wrap = createClass({
 					showSettings: this.showSettings,
 					showMove: this.showMove,
 					editable: s.editable,
+					hasErrors: this.hasErrors(),
 					docId: p.docId,
 					url: p.url,
 					defaultCatalog: p.defaultCatalog,

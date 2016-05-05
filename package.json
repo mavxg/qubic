@@ -59,6 +59,7 @@
     "passport-local": "^1.0.0",
     "passport-twitter": "^1.0.3",
     "qube": "git://github.com/mavxg/qube",
+    "qube-excel": "github:nikk1e/qube-excel",
     "serve-favicon": "~2.2.0",
     "share": "^0.7.19",
     "slate0": "git://github.com/mavxg/ot-sexpr",

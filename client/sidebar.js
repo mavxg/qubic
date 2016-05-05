@@ -1,10 +1,12 @@
 var friar = require('friar');
+var slatejs = require('slatejs');
 var DOM         = friar.DOM;
 var createClass = friar.createClass;
 var moment = require('moment');
 
-var ot = require('ot-sexpr');
-var List = ot.List;
+var ql = require('qube');
+
+var keyToId = slatejs.keyToId;
 
 function toHeaders(list, filter, stack, num) {
 	stack = stack || [];
@@ -225,8 +227,26 @@ var History = createClass({
 //list of errors for the current open notebook
 var ErrorList = createClass({
 	render: function() {
+		var cells = this.props.cells;
+		var errors = [];
+		if (cells) cells.forEach(function(cell) {
+			if (cell.errors && cell.errors.length > 0)
+				errors.push(cell);
+		});
+		if (errors.length > 0) {
+			return DOM.div({className:'errors'},[
+			DOM.h3({key:'errors'},"Errors"),
+			DOM.div({key:'elist'},errors.map(function(cell) {
+				return DOM.div({},[
+					DOM.a({href: '#' + keyToId(cell.context.node), className:"error"},ql.showMr(cell.originalSexpr)),
+					DOM.pre({className:"error"},[DOM.code({}, cell.errors[0])])
+				]);
+			}))
+			]);
+		}
 		return DOM.div({className:'errors'},[
 			DOM.h3({key:'errors'},"Errors"),
+			DOM.p({},"No errors found.")
 		]);
 	},
 });
@@ -304,7 +324,7 @@ var Sidebar = createClass({
 					value: p.filter,
 					}),
 				]),
-			Show({filter:p.filter, doc:doc}),
+			Show({filter:p.filter, doc:doc, cells:p.cells, ast: p.ast}),
 			]);
 	},
 });
