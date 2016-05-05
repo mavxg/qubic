@@ -26,10 +26,11 @@ var documentSchema = mongoose.Schema({
 });
 
 documentSchema.index({
+	title: 'text',
+	text: 'text',
+	slug: 'text',
 	status: 1,
-	title: 'text', 
-	text: 'text', 
-	slug: 'text'
+	catalog: 1
 },{
 	weights:{
 		title:10,

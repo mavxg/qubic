@@ -1,5 +1,5 @@
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-var User           = require('../models/user');
+var User           = require('../../models/user');
 
 module.exports = new GoogleStrategy({
     clientID          : process.env.GOOGLE_ID,

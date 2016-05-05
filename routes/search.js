@@ -29,39 +29,56 @@ function collections(str, limit) {
   ).exec();
 }
 
-function documents(str, limit) {
-  return Document.find(
-    { $text: { $search: str }, status:'public' },
-    { score: { $meta: "textScore" } }
-  ).sort(
-    { score: { $meta: "textScore" } }
-  ).limit(limit || 20
-  ).select('catalog title slug created updated'
-  ).lean(
-  ).exec();
+function documents(user, str, limit) {
+  return Collection.find({ $or: [
+      {'owners':user.name},
+      {'writers':user.name},
+      {'readers':user.name}
+      ]},'name')  
+  .exec().then(function(colls){
+    var collections = colls.map(function(coll) {
+      return coll.name;
+    });
+    return Document.find(
+      {$and:
+        [{$or: [{'catalog':{$in:collections}},
+                {'catalog':'@'+user.name},
+                {'status':{$in:['full','public']}}
+               ]},
+        {$text:{$search:str}}
+        ]
+      },
+      { score: { $meta: "textScore" } }
+    ).sort({ score: { $meta: "textScore" } }
+    ).limit(limit || 20
+    ).select('catalog title slug created updated archived'
+    ).lean(
+    ).exec();
+  });
 }
 
 router.get('/', function(req, res, next) {
   if (!req.query.q)
-  	return res.render('search', { q:''});
+    return res.render('search', { q:''});
   var q = req.query.q || '';
+  var user = req.user || {name: 'anonymous'};
   Promise.all([
-  	documents(q),
-  	people(q),
-  	collections(q)
+    documents(user,q),
+    people(q),
+    collections(q)
   ]).then(function(values) {
-  	var result = {
-  		q:q,
-  		documents: values[0],
-  		people: values[1],
-  		collections: values[2],
-  	};
-  	if (req.xhr)
-  		res.send(result);
-  	else
-  		res.render('search', result);
+    var result = {
+      q:q,
+      documents: values[0],
+      people: values[1],
+      collections: values[2],
+    };
+    if (req.xhr)
+      res.send(result);
+    else
+      res.render('search', result);
   }).catch(function(e) {
-  	next(e);
+    next(e);
   });
 
 });
@@ -73,7 +90,7 @@ router.get('/people', function(req, res, next) {
       q:q,
       people: ps
     };
-  	if (req.xhr)
+    if (req.xhr)
       res.send(result);
     else
       res.render('search-people', result);
@@ -83,7 +100,7 @@ router.get('/people', function(req, res, next) {
 router.get('/collections', function(req, res, next) {
   var q = req.query.q || '';
   collections(q).then(function(ps) {
-  	var result = {
+    var result = {
       q:q,
       collections: ps
     };
@@ -97,7 +114,7 @@ router.get('/collections', function(req, res, next) {
 router.get('/documents', function(req, res, next) {
   var q = req.query.q || '';
   documents(q).then(function(ps) {
-  	res.send(ps);
+    res.send(ps);
   })
 });
 

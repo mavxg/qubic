@@ -30,7 +30,7 @@ router.post('/new', function(req, res) {
 				collection:col
 			});
 		}
-		res.redirect('../'+ col.name);
+		res.redirect('/'+ col.name);
 	});
 });
 
@@ -38,6 +38,8 @@ router.post('/new', function(req, res) {
 function isOwner(req, res, next) {
 	if (req.collection.owners.indexOf(req.user.name) === -1)
 		next('You do not have permission to edit this collection');
+
+	res.locals.newCatalog = req.collection.name;
 	next();
 }
 
@@ -67,7 +69,7 @@ router.post('/settings/:collection', isOwner, function(req, res, next) {
   				collection:col
   			});
 		}
-		res.redirect('../'+col.name);
+		res.redirect('/'+col.name);
 	})
 });
 
