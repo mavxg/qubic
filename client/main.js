@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		qube.clear();
 		qube.exprs(sharedoc.snapshot.qube_expressions());
-		qube.build();
+		//qube.build();
 
 		var baseContext = sharedoc.createContext();
 		var context = new ec.EncryptedContext(baseContext);
