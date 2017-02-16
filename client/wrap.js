@@ -391,8 +391,8 @@ var undoer = function(app) {
 	return function(editor) {
 		return {
 			commands: {
-				undo,
-				redo,
+				undo: undo,
+				redo: redo,
 			},
 			keymap: [
 				{keys:["ctrl+z"], command:"undo"},

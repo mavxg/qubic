@@ -2,9 +2,9 @@ var slatejs = require('slatejs');
 var ql      = require('qube');
 var xl      = require('qube-excel');
 var slatejs_qube = require('slatejs-qube');
-var slatejs_encryption = require('slatejs-encryption');
+//var slatejs_encryption = require('slatejs-encryption');
 var share = require('share/lib/client');
-var ec    = require('encrypted-context')(slatejs);
+//var ec    = require('encrypted-context')(slatejs);
 var Wrap = require('./wrap');
 var friar = require('friar');
 var Dummy = require('dummy-sharejs-connection');
@@ -53,12 +53,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		//qube.build();
 
 		var baseContext = sharedoc.createContext();
-		var context = new ec.EncryptedContext(baseContext);
-		var encryptionPlugin = slatejs_encryption(context, slatejs);
+		var context = baseContext; //new ec.EncryptedContext(baseContext);
+		//var encryptionPlugin = slatejs_encryption(context, slatejs);
 
 		var undoManager = new UndoManager(slatejs.type, 400);
 		var p = slatejs.plugins;
-		var plugins = [p.base, p.table, qubePlugin, encryptionPlugin];
+		var plugins = [p.base, p.table, qubePlugin]; //, encryptionPlugin];
 
 		window.wrap = Wrap({
 			qube: qube,
