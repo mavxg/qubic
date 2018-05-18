@@ -40,7 +40,7 @@ var ot = require('ot-sexpr');
 
 livedb.ot.registerType(ot);
 
-var MONGODB_URL = process.env.MONGODB_URL ||
+var MONGODB_URL = process.env.QUBE_MONGODB_URL ||
   'mongodb://localhost:27017/qube';
 var AD_CONTROLLER = process.env.AD_CONTROLLER;
 

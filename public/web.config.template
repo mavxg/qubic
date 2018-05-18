@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <system.webServer>
+        <rewrite>
+            <rules>
+                <clear />
+                <rule name="ReverseProxyInboundRule" stopProcessing="true">
+                    <match url="(.*)" />
+                    <conditions logicalGrouping="MatchAll" trackAllCaptures="false">
+                        <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+                        <add input="{CACHE_URL}" pattern="^(.+)://" />
+                    </conditions>
+                    <action type="Rewrite" url="{C:1}://127.0.0.1:{{QUBE_PORT}}/{R:1}" logRewrittenUrl="false" />
+                    <serverVariables>
+                        <set name="HTTP_Sec_WebSocket_Extensions" value="none" />
+                    </serverVariables>
+                </rule>
+            </rules>
+        </rewrite>
+        <staticContent>
+            <mimeMap fileExtension=".woff2" mimeType="application/font-woff2" />
+        </staticContent>
+    </system.webServer>
+</configuration>
