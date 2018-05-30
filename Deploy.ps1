@@ -3,7 +3,7 @@ Param(
   [string]$environmentPath, # slug path
   [string]$name = "qubic",
   [string]$path = "C:\Apps\qubic",
-  [string]$port = "4000",
+  [string]$port = "3000",
   [string]$hostname = "127.0.0.1",
   [string]$mongoUrl = "mongodb://localhost:27017/qubic",
   [string]$nodeEnv = "production",

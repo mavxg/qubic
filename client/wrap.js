@@ -11,8 +11,6 @@ var Editor = Slate.Editor;
 var Selection = ot.Selection;
 var Region    = ot.Region;
 
-//var slatejs_encryption = require('slatejs-encryption');
-
 function findTitle(list) {
 	if (!(typeof list === 'object' && list.type === 'list')) return;
 	var h = list.head().sym;
@@ -408,10 +406,13 @@ var undoer = function(app) {
 var Wrap = createClass({
 	getInitialState: function() {
 		var p = this.props;
-		p.context._onOp = this.serverApply.bind(this);
+		//p.context.on('op', this.serverApply.bind(this));
+		var load = this.docLoad.bind(this);
+		p.context.on('load', load);
+		p.context.on('create', load);
 		this.undoer = undoer(this);
 		return {
-			doc: p.context.getSnapshot(),
+			doc: p.context.data,
 			selection: new Selection([new Region(7,7)]),
 			paused: p.sharedoc.paused,
 			cells: p.qube._cells,
@@ -424,9 +425,12 @@ var Wrap = createClass({
 			filter: '',
 		};
 	},
+	docLoad: function() {
+		this.setState({doc:this.props.context.data});
+	},
 	didMount: function() {
 		var sharedoc = this.props.sharedoc;
-		sharedoc.on('after op', this.afterOp);
+		sharedoc.on('op', this.afterOp);
 		this.props.qube.on('change', this.qubeChange)
 		
 	},
@@ -464,7 +468,7 @@ var Wrap = createClass({
 		//serverApply must not throw or ops get duplicated
 		try {
 			var selection = ot.transformCursor(this.state.selection, op, false);
-			this.setState({doc: this.props.context.getSnapshot(), selection: selection});
+			this.setState({doc: this.props.context.data, selection: selection});
 			this.props.undoManager.transform(op);
 		} catch (e) {
 			console.log(e);
@@ -527,7 +531,7 @@ var Wrap = createClass({
 		return false;
 	},
 	onChange: function() {
-		var doc = this.props.context.getSnapshot();
+		var doc = this.props.context.data;
 		if (doc === undefined) return;
 
 		if (doc !== this.state.doc)
@@ -617,7 +621,7 @@ var Wrap = createClass({
 		context.submitOp(op);
 		var sel = selection ? selection :
 			ot.transformCursor(this.state.selection, op, true);
-		this.setState({doc: context.getSnapshot(), selection: sel});
+		this.setState({doc: context.data, selection: sel});
 		this.onChange();
 	},
 	apply: function(op, selection, compose) {

@@ -3,6 +3,7 @@ extends layout
 block content
   #wrap
   script(type="text/javascript").
+    var docSexpr = !{JSON.stringify(sexpr)};
     var docId = '#{docId}';
     var docCollection = 'draft';
     var catalog = '#{doc.catalog}';
@@ -19,6 +20,5 @@ block content
       //alert('Leaving page')
       //TODO: snapshot the document here. (and wait)
     }
-  script(type='text/javascript' src='/channel/bcsocket.js')
   script(type='text/javascript' src='/javascript/utils.js')  
   script(type='text/javascript' src='/javascript/main.js')  

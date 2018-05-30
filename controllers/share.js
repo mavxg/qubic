@@ -1,6 +1,6 @@
 var ot = require('ot-sexpr');
 
-module.exports = (backend) => {
+module.exports = (backend, connection) => {
 
 
 	//return ops in range
@@ -8,7 +8,7 @@ module.exports = (backend) => {
 	  var from = parseInt(req.query.from) || 0;
       var to = parseInt(req.query.to) || 1000;
       backend.getOps(req.params.cName,
-        req.params.docName, from, to, function(err, ops) {
+        req.params.docName, from, to, {}, function(err, ops) {
       	if (err) return next(err);
       	res.send(ops);
       });
@@ -17,14 +17,15 @@ module.exports = (backend) => {
     function history(req, res, next) {
     	var cName = req.params.cName;
     	var docName = req.params.docName;
-    	backend.fetch(cName, docName, function(err, doc) {
+      var doc = connection.get(cName, docName);
+    	doc.fetch(function(err) {
         	if (err) return next(err);
         	if (!doc.type) return next('Unknown file');
-        	var to = parseInt(req.params.rev || doc.v);
+        	var to = parseInt(req.params.rev || doc.version);
         	var from = to - 10000;
         	if (from <= 0) from = 1;
-        	backend.getOps(cName,
-        		docName, from, to, function(err, ops) {
+        	backend.db.getOps(cName,
+        		docName, from, to, {metadata: true}, function(err, ops) {
       			if (err) return next(err);
       			var hist = [];
       			var last;
@@ -59,16 +60,17 @@ module.exports = (backend) => {
     }
 
     function revision(cName, docName, rev, next) {
-    	backend.fetch(cName, docName, function(err, doc) {
+      var doc = connection.get(cName, docName);
+    	doc.fetch(function(err) {
         if (err) return next(err);
         if (!doc.type) return next('Unknown file');
-        var snapshot = ot.parse(doc.data)[0];
-        var v = parseInt(rev || doc.v);
-        if (v > doc.v) return next('Unknown revision');
+        var snapshot = doc.data;
+        var v = parseInt(rev || doc.version);
+        if (v > doc.version) return next('Unknown revision');
         var from = v;
-        var to = doc.v + 1;
-        backend.getOps(cName,
-        	docName, from, to, function(err, ops) {
+        var to = doc.version + 1;
+        backend.db.getOps(cName,
+        	docName, from, to, {metadata:true}, function(err, ops) {
       		if (err) return next(err);
       		//TODO: rewind to snapshot
       		var op;

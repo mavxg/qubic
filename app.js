@@ -12,11 +12,7 @@ var hat          = require('hat');
 //var session      = require('express-session');
 var session      = require('cookie-session')
 
-var livedb       = require('livedb');
-var livedbMongo  = require('livedb-mongo');
-var Socket       = require('browserchannel').server;
-var Duplex       = require('stream').Duplex;
-var sharejs      = require('share');
+var ShareDB      = require('sharedb');
 
 var mongoose     = require('mongoose');
 var flash        = require('connect-flash');
@@ -38,20 +34,21 @@ app.locals.moment = require('moment');
 
 var ot = require('ot-sexpr');
 
-livedb.ot.registerType(ot);
+ShareDB.types.register(ot); //TODO: ot-sexpr should be wrapped as ot-sexpr.type
 
 var MONGODB_URL = process.env.QUBE_MONGODB_URL ||
   'mongodb://localhost:27017/qube';
 var AD_CONTROLLER = process.env.AD_CONTROLLER;
 
 //we have two connections to mongodb
-mongoose.connect(MONGODB_URL);
-var db = livedbMongo(MONGODB_URL, {safe:false});
-var backend = livedb.client(db);
-var drafts = backend.collection('draft');
+mongoose.connect(MONGODB_URL, { useMongoClient: true });
+const db = require('sharedb-mongo')(MONGODB_URL);
+var backend = new ShareDB({db});
+var connection = backend.connect();
 
-var sharec = require('./controllers/share')(backend);
+var sharec = require('./controllers/share')(backend, connection);
 
+app.backend = backend;
 app.locals.backend = backend;
 
 const Document = require('./models/document');
@@ -96,76 +93,10 @@ app.use(function(req,res,next){
     res.locals.canLogout = !AD_CONTROLLER;
     if (req.user)
       res.locals.newCatalog = req.user.catalog;
-    req.drafts = drafts; //livedb collection
+    //req.drafts = drafts; //livedb collection
     next();
 });
 
-const share = sharejs.server.createClient({backend: backend});
-share.use(function(req, next) {
-  //TODO: op filter for share docs here
-  next();
-});
-
-var pv = {}
-share.preValidate = function(op, doc) {
-  if (op.op != undefined) {
-    pv[doc.docName + ':' + doc.v] = doc.data.toSexpr()
-  }
-}
-
-share.validate = function(op, doc) {
-  if (op.op != undefined) {
-    try {
-      var key = doc.docName + ':' + doc.v;
-      var prevSS = pv[key];
-      delete pv[key];
-      var o = ot.invert(op.op);
-      var prev = ot.apply(doc.data, o);
-      var prevS = prev.toSexpr();
-      if (prevSS != prevS) {
-        return 'Inverse does not match original';
-      }
-    } catch(e) {
-      console.log(e)
-      return "Could not invert op";
-    }
-  }
-  return;
-};
-
-//sharejs websocket hookup
-app.use(Socket(function(client, req) {
-  if (req.user) {
-    client.user = req.user;
-  }
-  
-  var stream = new Duplex({objectMode: true});
-
-  stream._read = function() {};
-  stream._write = function(chunk, encoding, callback) {
-    if (client.state !== 'closed') {
-      client.send(chunk);
-    }
-    callback();
-  };
-
-  client.on('message', function(data) {
-    console.log(JSON.stringify(data))
-    stream.push(data);
-  });
-
-  client.on('close', function(reason) {
-    stream.push(null);
-    stream.emit('close');
-  });
-
-  stream.on('end', function() {
-    client.close();
-  });
-
-  // Give the stream to sharejs
-  return share.listen(stream, client);
-}));
 
 // provide rack for ids (new rack every 2 hours)
 var MILLISECONDS_PER_RACK = 1000 * 60 * 60 * 2;
@@ -211,7 +142,7 @@ app.use('/search', require('./routes/search'));
 app.use('/auth', require('./routes/auth'));
 app.use('/unlink', isLoggedIn, require('./routes/unlink'));
 app.use('/collection', isLoggedIn, require('./routes/collection'));
-app.use('/api/share', share.rest())
+//app.use('/api/share', share.rest())
 
 app.get('/', (AD_CONTROLLER ? isLoggedIn : nop), function(req, res) {
   if (req.isAuthenticated()) {
@@ -282,18 +213,14 @@ function create(req, res, next) {
   doc.status = 'private';
   doc.save(function(err) {
     if (err) return next(err);
-    req.drafts.submit(
-      id,
-      {v:0, create:{type:'sexpr', data:sexpr}},
-      function(err) {
-        if (err) return next(err);
-        res.redirect('/' + req.catalog + '/untitled-' + id);
-      });
+    res.redirect('/' + req.catalog + '/untitled-' + id); //Create the actual doc from the client side.
   });
 }
 
 app.post('/new/:catalog', isLoggedIn, create);
 
+//TODO: this shouldn't work like this... The snapshot should be all the document you need.
+// you shouldn't have some extra document around your document.
 app.post('/try',function(req, res, next) {
   var id = genId();
   var doc = new Document();
@@ -306,13 +233,12 @@ app.post('/try',function(req, res, next) {
   doc.status = 'full_unlisted'; //anyone can edit
   doc.save(function(err) {
     if (err) return next(err);
-    req.drafts.submit(
-      id,
-      {v:0, create:{type:'sexpr', data:sexpr}},
+    var sdoc = connection.get('draft', id);
+    sdoc.create(sexpr, 'sexpr', 
       function(err) {
         if (err) return next(err);
-        res.redirect('/' + doc.catalog + '/untitled-' + doc._id);
-      });
+        res.redirect('/' + doc.catalog + '/untitled-' + id);
+    });
   });
 });
 
@@ -323,14 +249,15 @@ function canRead(req, res, next) {
 }
 
 app.get('/api/history/:catalog/:title', canRead, function(req, res, next) {
-  var docName = req.id;
-  req.drafts.fetch(docName, function(err, doc) {
+  var id = req.id;
+  var doc = connection.get('draft', id);
+  doc.fetch(function(err) {
       if (err) return next(err);
       if (!doc.type) return next('Unknown file');
-      var to = parseInt(req.params.rev || doc.v);
+      var to = parseInt(req.params.rev || doc.version);
       var from = to - 10000;
       if (from <= 0) from = 1;
-      req.drafts.getOps(docName, from, to, function(err, ops) {
+      db.getOps('draft', id, from, to, {metadata: true}, function(err, ops) {
         if (err) return next(err);
         var hist = [];
         var last;
@@ -417,7 +344,7 @@ app.get('/:catalog/:title', doc.listed, loadSnapshot, userc.loadCatalogs, functi
     return res.send(res.locals.snapshot.data || '(doc)');
   res.render((req.doc.archived ? 'readonly' : 'edit'), {
       title: 'Qubic',
-      sexpr:(res.locals.snapshot.data || '(doc)'),
+      sexpr:(res.locals.snapshot.data ? res.locals.snapshot.data.toSexpr() : '(doc)'),
       doc: req.doc,
       catalog: req.catalog,
       owns: JSON.stringify(!!req.collection_owner),
@@ -435,8 +362,10 @@ app.get('/:catalog/:title', doc.listed, loadSnapshot, userc.loadCatalogs, functi
 });
 
 function loadSnapshot(req, res, next) {
+
   try {
-    req.drafts.fetch(req.id, function(err, doc) {
+    var doc = connection.get('draft', req.id);
+    doc.fetch(function(err) {
       if (err) return next(err);
       if (!doc.type) return next('Unknown file');
       res.locals.snapshot = doc;
@@ -467,7 +396,8 @@ ot.List.prototype.textContent = function() {
 
 function deleteDoc(req, res, next) {
   //TODO: delete the doc
-  req.drafts.submit(req.id, {del:true}, function(err) {
+  var doc = connection.get('draft', req.id);
+  doc.del(function(err) {
     if (err) return next(err);
     Document.remove({_id:req.id, catalog:req.catalog}, function(err) {
       if (err) return next(err);
@@ -521,8 +451,9 @@ function unarchiveDoc(req, res, next) {
 //update a document in its current location
 //expected to be an ajax call.
 app.post('/:catalog/:title', loadSnapshot, function(req, res, next) {
-  if (!(req.collection_writer || req.writer))
+  if (!(req.collection_writer || req.writer)) {
     return next(new Error(401)); // 401 Not Authorized
+  }
 
   if (req.body.del) {
     console.log("Deleting: " + req.id);
@@ -546,7 +477,7 @@ app.post('/:catalog/:title', loadSnapshot, function(req, res, next) {
   var body = req.body;
 
   try {
-    var sexpr = ot.parse(res.locals.snapshot.data || '(doc)')[0];
+    var sexpr = res.locals.snapshot.data; //this will already be deserialised
     doc.text = sexpr.textContent();
   } catch (e) {
     console.log(e);
@@ -574,41 +505,7 @@ app.delete('/:catalog/:title', function(req, res, next) {
   deleteDoc(req, res, next);
 });
 
-//app.get('/api/:cName/:docName/ops', canRead, sharec.ops);
-//app.get('/api/:cName/:docName/hist/:rev?', canRead, sharec.history);
-//app.get('/archive/:cName/:docName/:rev', function(req, res, next) {
-//    share.revision(req.params.cName, req.params.docName, req.params.rev, function(err, snapshot) {
-//        if (err) next(err);
-//        res.send(snapshot.toSexpr()); //TODO: check request type and render doc as html or json
-//      });
-//  })
-/*
-function show_revision(req, res, next) {
-  console.log(req.params);
-  var doc = req.doc;
-  var messages = req.messages || [];
-  //if (req.params.rev) {
-  share.revision('draft', req.id, req.params.rev || doc.v, function(err, snapshot) {
-          console.log('here')
-          console.log(err)
-          if (err) return next(err);
-          console.log(snapshot.toSexpr())
-          if (req.xhr) {
-        res.send(snapshot.toSexpr() || '(doc)');
-      } else {
-        res.render('readonly', {
-          doc:doc,
-          sexpr:snapshot.toSexpr(),
-          catalog: req.catalog,
-          owns: JSON.stringify(req.collection_owner),
-          writes: JSON.stringify(req.writer),
-          docId: req.doc.id,
-          messages: JSON.stringify(messages),
-        });
-      }
-  });
-}
-*/
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');

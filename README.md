@@ -15,6 +15,10 @@ net start MongoDB
 
 ### Install
 
+requires Python2.7 
+npm config set cafile /c/cacert.pem
+npm config set strict-ssl false
+
 ```dos
 git clone ssh://git@qubic.io/var/repo/qubic.git
 cd qubic
@@ -24,6 +28,11 @@ net start qubic
 ```    
 
 ### Debug
+
+export QUBE_MONGODB_URL=mongodb://uss-lon-apps3ut:27017/qube (bash)
+set QUBE_MONGODB_URL=mongodb://uss-lon-apps3ut:27017/qube (dos)
+set AD_CONTROLLER=ldap://uss-lon-dom1
+
 
 ```dos
 npm run dev-win
