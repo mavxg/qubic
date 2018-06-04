@@ -13,7 +13,7 @@ block content
         each collection in owns
           .collection
             h3.title
-              a(href="/#{collection.name}")= collection.title
+              a(href=`/${collection.name}`)= collection.title
             p= collection.description
     if follows.length > 0
       .follows
@@ -21,7 +21,7 @@ block content
         each collection in follows
           .collection
             h3.title
-              a(href="/#{collection.name}")= collection.title
+              a(href=`/${collection.name}`)= collection.title
             p= collection.description
     if writes.length > 0
       .writes
@@ -29,7 +29,7 @@ block content
         each collection in writes
           .collection
             h3.title
-              a(href="/#{collection.name}")= collection.title
+              a(href=`/${collection.name}`)= collection.title
             p= collection.description
     if reads.length > 0
       .reads
@@ -37,5 +37,5 @@ block content
         each collection in reads
           .collection
             h3.title
-              a(href="/#{collection.name}")= collection.title
+              a(href=`/${collection.name}`)= collection.title
             p= collection.description

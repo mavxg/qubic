@@ -2,14 +2,14 @@ extends layout
 
 
 block header
-  include ./includes/header.jade
+  include ./includes/header.pug
 
 block content
   .content.wide
     header.col
       h1.pure-u-4-5= collection.title
       if (showEdit)
-        a.pure-u-1-5(href="/collection/settings/#{collection.name}")
+        a.pure-u-1-5(href=`/collection/settings/${collection.name}`)
           | Edit Collection 
           em.fa.fa-pencil-square-o
     .pure-g
@@ -31,8 +31,8 @@ block content
               each story in stories
                 .story-block
                   h3.title
-                    a(href="/#{collection.name}/#{(story.title || 'Untitled').        replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-#{story._id}")= (        story.title || 'Untitled')
-                  a(href="/#{collection.name}/#{(story.title || 'Untitled').replace(/\s        /g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-#{story._id}")= story.slug
+                    a(href=`/${collection.name}/${(story.title || 'Untitled').replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-${story._id}`)= (story.title || 'Untitled')
+                  a(href=`/#{collection.name}/${(story.title || 'Untitled').replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-${story._id}`)= story.slug
                   .meta-line
                     span #{moment(story.updated).fromNow()}
             else

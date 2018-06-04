@@ -2,7 +2,7 @@ extends layout
 
 
 block header
-  include ./includes/header.jade
+  include ./includes/header.pug
 
 block content
   h1= collection.title
@@ -10,8 +10,8 @@ block content
     each submission in submissions
       .story-block
         h3.title
-          a(href="/edit/#{submission.document_id}")= (submission.title || 'Untitled')
-        a(href="/edit/#{submission.document_id}")= submission.slug
+          a(href=`/edit/${submission.document_id}`)= (submission.title || 'Untitled')
+        a(href=`/edit/${submission.document_id}`)= submission.slug
         .meta-line
           span= submission.submitted_by
           span.dot &middot;

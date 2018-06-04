@@ -1,7 +1,7 @@
 extends layout
 
 block header
-  include ./includes/header.jade
+  include ./includes/header.pug
 
 block content
   .content.wide.search
@@ -16,23 +16,23 @@ block content
               li
                 a(href="/search?q=#{q}") All
               li
-                a.active(href="/search/people?q=#{q}") People
+                a(href="/search/people?q=#{q}") People
               li
-                a(href="/search/collections?q=#{q}") Collections
+                a.active(href="/search/collections?q=#{q}") Collections
         .pure-u-14-24.documents
           .col
-            if people && people.length > 0
-              .people
+            if collections && collections.length > 0
+              .collections
                 .heading.top-border
                   h3
-                each person in people
-                  .person
+                each collection in collections
+                  .collection
                     h3.title
-                      a(href="/@#{person.name}")= (person.displayName || person.name)
-                    a(href="/@#{person.name}")= person.bio
+                      a(href="/#{collection.name}")= collection.title
+                    a(href="/#{collection.name}")= collection.description
             else
               .heading.top-border
                 h3
               .excuse
-                p We couldn't find any people.
+                p We couldn't find any collections.
   
