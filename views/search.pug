@@ -7,18 +7,18 @@ block content
   .content.wide.search
     header.col
       form()
-        input.search-input(type="search", name='q',value="#{q}",placeholder='Search Qubic',autofocus=true)
+        input.search-input(type="search", name='q',value=`${q}`,placeholder='Search Qubic',autofocus=true)
     if q
       .pure-g
         .pure-u-4-24
           .col
             ul.nav-v
               li
-                a.active(href="/search?q=#{q}") All
+                a.active(href=`/search?q=${q}`) All
               li
-                a(href="/search/people?q=#{q}") People
+                a(href=`/search/people?q=${q}`) People
               li
-                a(href="/search/collections?q=#{q}") Collections
+                a(href=`/search/collections?q=${q}`) Collections
         .pure-u-14-24.documents
           .col
             if documents && documents.length > 0
@@ -27,8 +27,8 @@ block content
               each story in documents
                 .story-block
                   h3.title
-                    a(href="/#{story.catalog}/#{(story.title || 'Untitled').replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-#{story._id}")= (story.title || 'Untitled')
-                  a(href="/#{story.catalog}/#{(story.title || 'Untitled').replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-#{story._id}")= story.slug
+                    a(href=`/${story.catalog}/${(story.title || 'Untitled').replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-${story._id}`)= (story.title || 'Untitled')
+                  a(href=`/${story.catalog}/${(story.title || 'Untitled').replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}-${story._id}`)= story.slug
                   .meta-line
                     span #{moment(story.updated).fromNow()}  
             else
@@ -45,8 +45,8 @@ block content
                 each person in people
                   .person
                     h3.title
-                      a(href="/@#{person.name}")= (person.displayName || person.name)
-                    a(href="/@#{person.name}")= person.bio
+                      a(href=`/@${person.name}`)= (person.displayName || person.name)
+                    a(href=`/@${person.name}`)= person.bio
             if collections && collections.length > 0
               .people
                 .heading.top-border
@@ -54,6 +54,6 @@ block content
                 each collection in collections
                   .collection
                     h3.title
-                      a(href="/#{collection.name}")= collection.title
-                    a(href="/#{collection.name}")= collection.description
+                      a(href=`/${collection.name}`)= collection.title
+                    a(href=`/${collection.name}`)= collection.description
   

@@ -69,24 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		console.log('Failed at render');
 		console.log(e);
 	}
-/*
-	sharedoc.on('create', function() {
-		qube.clear();
-		qube.exprs(sharedoc.data.qube_expressions());
-	});
 
-	sharedoc.on('load', function() {
-		if (!sharedoc.type) {
-			sharedoc.create(doc, 'sexpr');
-			return;
-		}
 
-		qube.clear();
-		try {
-			qube.exprs(sharedoc.data.qube_expressions());
-		} catch (e) {
-			qube.exprs([]);
-		};
-	});
-*/
+
 });

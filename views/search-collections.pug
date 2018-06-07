@@ -7,18 +7,18 @@ block content
   .content.wide.search
     header.col
       form()
-        input.search-input(type="search", name='q',value="#{q}",placeholder='Search Qubic',autofocus=true)
+        input.search-input(type="search", name='q',value=`${q}`,placeholder='Search Qubic',autofocus=true)
     if q
       .pure-g
         .pure-u-4-24
           .col
             ul.nav-v
               li
-                a(href="/search?q=#{q}") All
+                a(href=`/search?q=${q}") All
               li
-                a(href="/search/people?q=#{q}") People
+                a(href=`/search/people?q=${q}") People
               li
-                a.active(href="/search/collections?q=#{q}") Collections
+                a.active(href=`/search/collections?q=${q}`) Collections
         .pure-u-14-24.documents
           .col
             if collections && collections.length > 0
@@ -28,8 +28,8 @@ block content
                 each collection in collections
                   .collection
                     h3.title
-                      a(href="/#{collection.name}")= collection.title
-                    a(href="/#{collection.name}")= collection.description
+                      a(href=`/${collection.name}`)= collection.title
+                    a(href=`/${collection.name}`)= collection.description
             else
               .heading.top-border
                 h3

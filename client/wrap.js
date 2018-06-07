@@ -426,7 +426,12 @@ var Wrap = createClass({
 		};
 	},
 	docLoad: function() {
-		this.setState({doc:this.props.context.data});
+		const sharedoc = this.props.context;
+		if (!sharedoc.type) {
+			sharedoc.create('(doc (section (h1 "") (p "")))', 'sexpr');
+			return;
+		}
+		this.setState({doc:sharedoc.data});
 	},
 	didMount: function() {
 		var sharedoc = this.props.sharedoc;

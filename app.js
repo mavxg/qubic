@@ -81,8 +81,9 @@ if (AD_CONTROLLER) {
   app.all('*', passport.authenticate('ad'), function(req, res, next){
     if(req.isAuthenticated())
       next();
-    else
+    else {
       next(new Error(401)); // 401 Not Authorized
+    }
   });
 }
 
@@ -312,7 +313,7 @@ app.get('/:catalog/:title/:rev', function(req, res, next) {
       if (err) return next(err);
           console.log(snapshot.toSexpr())
       if (req.xhr) {
-        res.send(snapshot.toSexpr() || '(doc)');
+        res.send(snapshot.toSexpr() || '(doc (section (h1 "") (p "")))');
       } else {
         res.render('readonly', {
           title: 'Qubic',
@@ -341,10 +342,10 @@ app.get('/:catalog/:title', doc.listed, loadSnapshot, userc.loadCatalogs, functi
   if (!(req.collection_reader || req.reader) || req.deny)
     return next(new Error(401)); // 401 Not Authorized
   if (req.xhr)
-    return res.send(res.locals.snapshot.data || '(doc)');
+    return res.send(res.locals.snapshot.data || '(doc (section (h1 "") (p "")))');
   res.render((req.doc.archived ? 'readonly' : 'edit'), {
       title: 'Qubic',
-      sexpr:(res.locals.snapshot.data ? res.locals.snapshot.data.toSexpr() : '(doc)'),
+      sexpr:(res.locals.snapshot.data ? res.locals.snapshot.data.toSexpr() : '(doc (section (h1 "") (p "")))'),
       doc: req.doc,
       catalog: req.catalog,
       owns: JSON.stringify(!!req.collection_owner),
@@ -362,12 +363,18 @@ app.get('/:catalog/:title', doc.listed, loadSnapshot, userc.loadCatalogs, functi
 });
 
 function loadSnapshot(req, res, next) {
-
   try {
     var doc = connection.get('draft', req.id);
     doc.fetch(function(err) {
-      if (err) return next(err);
-      if (!doc.type) return next('Unknown file');
+      if (err) {
+        console.log(err)
+        return next(err);
+      }
+      //if (!doc.type) {
+      //  console.log('Unknown file type');
+      //  console.log(doc)
+      //  return next('Unknown file');
+      //}
       res.locals.snapshot = doc;
       return next();
     });

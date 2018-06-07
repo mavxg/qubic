@@ -3,6 +3,7 @@ const Document = require('../models/document');
 //gets listed documents into the system
 //assumes req.collection exists
 module.exports.listed = function(req, res, next) {
+  console.log('doc.listed')
   //TODO: check if you are logged in and what you might have access to.
   var filter = {
     'catalog': req.catalog,

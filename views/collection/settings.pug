@@ -2,7 +2,7 @@ extends ../layout
 
 
 block header
-  include ../includes/header.jade
+  include ../includes/header.pug
 
 block content
   .content
@@ -10,15 +10,15 @@ block content
     form.pure-form.pure-form-stacked.pure-g(method='post')
       fieldset
         label.pure-u-1 Name
-        input.pure-u-1(name='name', placeholder='Name',value="#{collection.name}")
+        input.pure-u-1(name='name', placeholder='Name',value=`${collection.name}`)
         label.pure-u-1 Title
-        input.pure-u-1(name='title', placeholder='Title',value="#{collection.title}")
+        input.pure-u-1(name='title', placeholder='Title',value=`${collection.title}`)
         label.pure-u-1 Description
         textarea.pure-u-1(name='description', placeholder='Description')= collection.description
         label.pure-u-1 Owners
-        input.pure-u-1(name='owners', placeholder='Owners',value="#{collection.owners.join(', ')}")
+        input.pure-u-1(name='owners', placeholder='Owners',value=`${collection.owners.join(', ')}`)
         label.pure-u-1 Readers
-        input.pure-u-1(name='readers', placeholder='Readers',value="#{collection.readers.join(', ')}")
+        input.pure-u-1(name='readers', placeholder='Readers',value=`${collection.readers.join(', ')}`)
         label.pure-u-1 Writers
-        input.pure-u-1(name='writers', placeholder='Writers',value="#{collection.writers.join(', ')}")
+        input.pure-u-1(name='writers', placeholder='Writers',value=`${collection.writers.join(', ')}`)
         button.pure-button.pure-button-primary.btn(type='submit') Update
