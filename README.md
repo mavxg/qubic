@@ -29,9 +29,9 @@ net start qubic
 
 ### Debug
 
-export QUBE_MONGODB_URL=mongodb://uss-lon-apps3ut:27017/qube (bash)
-set QUBE_MONGODB_URL=mongodb://uss-lon-apps3ut:27017/qube (dos)
-set AD_CONTROLLER=ldap://uss-lon-dom1
+export QUBE_MONGODB_URL=mongodb://{your_mongo_server}:27017/qube (bash)
+set QUBE_MONGODB_URL=mongodb://{your_mongo_server}:27017/qube (dos)
+set AD_CONTROLLER=ldap://{your_ad_controller}
 
 
 ```dos
